@@ -114,11 +114,39 @@ impl fmt::Display for HttpMethod {
 pub struct Request {
     method: HttpMethod,
     base_url: String,
-    query: Vec<(&'static str, String)>, // parameters and queries should not be
+    queries: Vec<(&'static str, String)>, // parameters and queries should not be
     parameters: Vec<(&'static str, String)>, // URL encoded.
 }
 
 impl Request {
+    pub fn get<S: ToString>(base_url: S) -> Self {
+        Self {
+            method: HttpMethod::GET,
+            base_url: base_url.to_string(),
+            queries: Vec::new(),
+            parameters: Vec::new(),
+        }
+    }
+
+    pub fn post<S: ToString>(base_url: S) -> Self {
+        Self {
+            method: HttpMethod::POST,
+            base_url: base_url.to_string(),
+            queries: Vec::new(),
+            parameters: Vec::new(),
+        }
+    }
+
+    pub fn query<V: ToString>(mut self, key: &'static str, value: V) -> Self {
+        self.queries.push((key, value.to_string()));
+        self
+    }
+
+    pub fn parameter<V: ToString>(mut self, key: &'static str, value: V) -> Self {
+        self.parameters.push((key, value.to_string()));
+        self
+    }
+
     /// https://developer.twitter.com/en/docs/authentication/oauth-1-0a/creating-a-signature
     pub fn create_signature(
         &self,
@@ -126,15 +154,43 @@ impl Request {
         oauth_token: &str,
         consumer_secret: &str,
         oauth_token_secret: &str,
+        oauth_nonce: &str,
+        oauth_timestamp: i64,
+    ) -> [u8; 20] {
+        let signature_base_string =
+            self.get_signature_base_string(consumer_key, oauth_token, oauth_nonce, oauth_timestamp);
+
+        let signing_key = get_signing_key(consumer_secret, oauth_token_secret);
+
+        hmacsha1::hmac_sha1(signing_key.as_bytes(), signature_base_string.as_bytes())
+    }
+
+    fn get_signature_base_string(
+        &self,
+        consumer_key: &str,
+        oauth_token: &str,
+        oauth_nonce: &str,
+        oauth_timestamp: i64,
     ) -> String {
-        let mut params = Vec::new();
-        for (key, value) in gen_auth_params(consumer_key) {
-            params.push((percent_encode(key), percent_encode(&value)));
-        }
+        let mut params = vec![
+            (percent_encode("oauth_nonce"), percent_encode(oauth_nonce)),
+            (
+                percent_encode("oauth_signature_method"),
+                percent_encode("HMAC-SHA1"),
+            ),
+            (
+                percent_encode("oauth_timestamp"),
+                percent_encode(&oauth_timestamp.to_string()),
+            ),
+            (
+                percent_encode("oauth_consumer_key"),
+                percent_encode(consumer_key),
+            ),
+            (percent_encode("oauth_version"), percent_encode("1.0")),
+            (percent_encode("oauth_token"), percent_encode(oauth_token)),
+        ];
 
-        params.push((percent_encode("oauth_token"), percent_encode(oauth_token)));
-
-        for (key, value) in &self.query {
+        for (key, value) in &self.queries {
             params.push((percent_encode(key), percent_encode(value)));
         }
 
@@ -149,24 +205,21 @@ impl Request {
             .collect::<Vec<_>>()
             .join("&");
 
-        let signature_base_string = format!(
+        format!(
             "{}&{}&{}",
             percent_encode(&self.method.to_string()),
             percent_encode(&self.base_url),
             percent_encode(&param_string)
-        );
-
-        let signing_key = format!(
-            "{}&{}",
-            percent_encode(consumer_secret),
-            percent_encode(oauth_token_secret)
-        );
-
-        base64::encode(&hmacsha1::hmac_sha1(
-            signing_key.as_bytes(),
-            signature_base_string.as_bytes(),
-        ))
+        )
     }
+}
+
+fn get_signing_key(consumer_secret: &str, oauth_token_secret: &str) -> String {
+    format!(
+        "{}&{}",
+        percent_encode(consumer_secret),
+        percent_encode(oauth_token_secret)
+    )
 }
 
 #[cfg(test)]
@@ -188,5 +241,67 @@ mod tests {
             "Dogs%2C%20Cats%20%26%20Mice"
         );
         assert_eq!(percent_encode("☃"), "%E2%98%83");
+    }
+
+    #[test]
+    fn signature_base_string() {
+        let request = Request::post("https://api.twitter.com/1.1/statuses/update.json")
+            .query("include_entities", "true")
+            .parameter(
+                "status",
+                "Hello Ladies + Gentlemen, a signed OAuth request!",
+            );
+
+        let consumer_key = "xvz1evFS4wEEPTGEFPHBog";
+        let oauth_token = "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb";
+        let oauth_nonce = "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg";
+        let oauth_timestamp = 1318622958;
+
+        assert_eq!(
+            request.get_signature_base_string(consumer_key, oauth_token, oauth_nonce, oauth_timestamp),
+            "POST&https%3A%2F%2Fapi.twitter.com%2F1.1%2Fstatuses%2Fupdate.json&include_entities%3Dtrue%26oauth_consumer_key%3Dxvz1evFS4wEEPTGEFPHBog%26oauth_nonce%3DkYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1318622958%26oauth_token%3D370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb%26oauth_version%3D1.0%26status%3DHello%2520Ladies%2520%252B%2520Gentlemen%252C%2520a%2520signed%2520OAuth%2520request%2521"
+            );
+    }
+
+    #[test]
+    fn signing_key() {
+        let consumer_secret = "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw";
+        let oauth_token_secret = "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE";
+        assert_eq!(
+            get_signing_key(consumer_secret, oauth_token_secret),
+            "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
+        );
+    }
+
+    #[test]
+    fn create_signature() {
+        let request = Request::post("https://api.twitter.com/1.1/statuses/update.json")
+            .query("include_entities", "true")
+            .parameter(
+                "status",
+                "Hello Ladies + Gentlemen, a signed OAuth request!",
+            );
+
+        let consumer_key = "xvz1evFS4wEEPTGEFPHBog";
+        let consumer_secret = "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw";
+        let oauth_token = "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb";
+        let oauth_token_secret = "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE";
+        let oauth_nonce = "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg";
+        let oauth_timestamp = 1318622958;
+
+        assert_eq!(
+            request.create_signature(
+                consumer_key,
+                oauth_token,
+                consumer_secret,
+                oauth_token_secret,
+                oauth_nonce,
+                oauth_timestamp
+            ),
+            [
+                0x84, 0x2B, 0x52, 0x99, 0x88, 0x7E, 0x88, 0x76, 0x02, 0x12, 0xA0, 0x56, 0xAC, 0x4E,
+                0xC2, 0xEE, 0x16, 0x26, 0xB5, 0x49
+            ]
+        );
     }
 }
