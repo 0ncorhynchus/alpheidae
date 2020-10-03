@@ -162,12 +162,11 @@ fn create_signature(
     hmacsha1::hmac_sha1(signing_key.as_bytes(), signature_base_string.as_bytes())
 }
 
-fn get_signature_base_string(
+fn get_oauth_params(
     tokens: &TokenKeys,
-    request: &Request,
     oauth_nonce: &str,
     oauth_timestamp: i64,
-) -> String {
+) -> Vec<(String, String)> {
     let mut params = vec![
         (percent_encode("oauth_nonce"), percent_encode(oauth_nonce)),
         (
@@ -191,6 +190,17 @@ fn get_signature_base_string(
             percent_encode(&oauth_tokens.key),
         ));
     }
+
+    params
+}
+
+fn get_signature_base_string(
+    tokens: &TokenKeys,
+    request: &Request,
+    oauth_nonce: &str,
+    oauth_timestamp: i64,
+) -> String {
+    let mut params = get_oauth_params(tokens, oauth_nonce, oauth_timestamp);
 
     for (key, value) in &request.queries {
         params.push((percent_encode(key), percent_encode(value)));
@@ -225,6 +235,19 @@ fn get_signing_key(tokens: &TokenKeys) -> String {
         "{}&{}",
         percent_encode(&tokens.consumer_keys.secret),
         oauth_token_secret,
+    )
+}
+
+fn get_authorization_header(mut params: Vec<(String, String)>, signature: &str) -> String {
+    params.push((percent_encode("oauth_signature"), percent_encode(signature)));
+    params.sort();
+    format!(
+        "OAuth {}",
+        params
+            .into_iter()
+            .map(|(key, value)| format!("{}=\"{}\"", key, value))
+            .collect::<Vec<_>>()
+            .join(", ")
     )
 }
 
@@ -303,6 +326,16 @@ mod tests {
                 0x84, 0x2B, 0x52, 0x99, 0x88, 0x7E, 0x88, 0x76, 0x02, 0x12, 0xA0, 0x56, 0xAC, 0x4E,
                 0xC2, 0xEE, 0x16, 0x26, 0xB5, 0x49
             ]
+        );
+    }
+
+    #[test]
+    fn oauth_header() {
+        let params = get_oauth_params(&get_tokens(), OAUTH_NONCE, OAUTH_TIMESTAMP);
+        let signature = "tnnArxj06cWHq44gCs1OSKk/jLY=";
+        assert_eq!(
+            get_authorization_header(params, signature),
+            r#"OAuth oauth_consumer_key="xvz1evFS4wEEPTGEFPHBog", oauth_nonce="kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg", oauth_signature="tnnArxj06cWHq44gCs1OSKk%2FjLY%3D", oauth_signature_method="HMAC-SHA1", oauth_timestamp="1318622958", oauth_token="370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb", oauth_version="1.0""#
         );
     }
 }
