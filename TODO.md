@@ -1,16 +1,16 @@
 # TODO
 
-## Twitter API v1.1
-
-### [Authentication](https://developer.twitter.com/en/docs/authentication/overview)
+## [Authentication](https://developer.twitter.com/en/docs/authentication/overview)
 - [x] POST oauth/access_token
 - [ ] GET  oauth/authenticate
 - [x] GET  oauth/authorize
 - [x] POST oauth/request_token
 - [ ] POST oauth2/token
-- [ ] POST oauth/invalidate_token
+- [x] POST oauth/invalidate_token
 - [ ] POST oauth2/invalidate_token
   
+## Twitter API v1.1
+
 ### Tweets
 #### [Post, retrieve, and engage with Tweets](https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/overview)
 - [ ] POST statuses/update
