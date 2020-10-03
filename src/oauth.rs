@@ -114,6 +114,49 @@ impl Authorize {
     }
 }
 
+pub fn access_token(keys: &KeyPair, oauth_token: String, oauth_verifier: String) -> AccessToken {
+    AccessToken::new(keys, oauth_token, oauth_verifier)
+}
+
+pub struct AccessToken<'a> {
+    consumer_keys: &'a KeyPair,
+    oauth_token: String,
+    oauth_verifier: String,
+}
+
+impl<'a> AccessToken<'a> {
+    pub fn new(consumer_keys: &'a KeyPair, oauth_token: String, oauth_verifier: String) -> Self {
+        Self {
+            consumer_keys,
+            oauth_token,
+            oauth_verifier,
+        }
+    }
+
+    pub async fn send(self) -> AccessTokenResponse {
+        let url = "https://api.twitter.com/oauth/access_token";
+        let tokens = TokenKeys {
+            consumer_keys: self.consumer_keys.clone(),
+            oauth_tokens: None,
+        };
+        let mut res = Request::post(url)
+            .oauth_param("oauth_token", &self.oauth_token)
+            .oauth_param("oauth_verifier", &self.oauth_verifier)
+            .send(&tokens)
+            .await
+            .unwrap();
+        serde_qs::from_bytes(res.body().await.unwrap().as_ref()).unwrap()
+    }
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct AccessTokenResponse {
+    oauth_token: String,
+    oauth_token_secret: String,
+    user_id: u64,
+    screen_name: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
