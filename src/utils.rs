@@ -82,15 +82,15 @@ impl Request {
     }
 
     fn get_url(&self) -> String {
-        let queries = self
-            .queries
-            .iter()
-            .map(|(key, value)| format!("{}={}", key, value))
-            .collect::<Vec<_>>()
-            .join("&");
-        if queries.is_empty() {
+        if self.queries.is_empty() {
             self.base_url.clone()
         } else {
+            let queries = self
+                .queries
+                .iter()
+                .map(|(key, value)| format!("{}={}", percent_encode(key), percent_encode(value)))
+                .collect::<Vec<_>>()
+                .join("&");
             format!("{}?{}", self.base_url, queries)
         }
     }
