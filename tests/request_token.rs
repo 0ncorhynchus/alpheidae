@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use twitter_api::*;
+use alpheidae::*;
 
 #[derive(Deserialize)]
 struct Config {

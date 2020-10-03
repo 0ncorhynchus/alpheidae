@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use std::io::{self, Write};
-use twitter_api::*;
+use alpheidae::*;
 
 #[derive(Deserialize)]
 struct Config {

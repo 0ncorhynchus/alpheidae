@@ -1,5 +1,5 @@
 [package]
-name = "twitter-api"
+name = "alpheidae"
 version = "0.1.0"
 authors = ["Suguru Kato <salmon.bioinformatics@gmail.com>"]
 edition = "2018"
