@@ -157,6 +157,25 @@ pub struct AccessTokenResponse {
     pub screen_name: String,
 }
 
+pub fn invalidate_token(tokens: &TokenKeys) -> InvalidateToken {
+    InvalidateToken::new(tokens)
+}
+
+pub struct InvalidateToken<'a> {
+    tokens: &'a TokenKeys,
+}
+
+impl<'a> InvalidateToken<'a> {
+    pub fn new(tokens: &'a TokenKeys) -> Self {
+        Self { tokens }
+    }
+
+    pub async fn send(self) {
+        let url = "https://api.twitter.com/1.1/oauth/invalidate_token";
+        let _res = Request::post(url).send(self.tokens).await.unwrap();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
