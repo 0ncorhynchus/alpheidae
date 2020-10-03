@@ -4,7 +4,7 @@ use chrono::{offset::Local, DateTime};
 use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use std::fmt::Display;
+use std::fmt;
 
 pub trait OAuthRequest<K, V> {
     fn oauth(self, params: Vec<(K, V)>) -> Self;
@@ -12,8 +12,8 @@ pub trait OAuthRequest<K, V> {
 
 impl<K, V> OAuthRequest<K, V> for ClientRequest
 where
-    K: Display,
-    V: Display,
+    K: fmt::Display,
+    V: fmt::Display,
 {
     fn oauth(self, params: Vec<(K, V)>) -> Self {
         let mut params: Vec<_> = params
@@ -93,6 +93,80 @@ pub fn gen_auth_params(consumer_key: &str) -> Vec<(&'static str, String)> {
     ]
     .into_iter()
     .collect()
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum HttpMethod {
+    POST,
+    GET,
+}
+
+impl fmt::Display for HttpMethod {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::POST => write!(f, "POST"),
+            Self::GET => write!(f, "GET"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Request {
+    method: HttpMethod,
+    base_url: String,
+    query: Vec<(&'static str, String)>, // parameters and queries should not be
+    parameters: Vec<(&'static str, String)>, // URL encoded.
+}
+
+impl Request {
+    /// https://developer.twitter.com/en/docs/authentication/oauth-1-0a/creating-a-signature
+    pub fn create_signature(
+        &self,
+        consumer_key: &str,
+        oauth_token: &str,
+        consumer_secret: &str,
+        oauth_token_secret: &str,
+    ) -> String {
+        let mut params = Vec::new();
+        for (key, value) in gen_auth_params(consumer_key) {
+            params.push((percent_encode(key), percent_encode(&value)));
+        }
+
+        params.push((percent_encode("oauth_token"), percent_encode(oauth_token)));
+
+        for (key, value) in &self.query {
+            params.push((percent_encode(key), percent_encode(value)));
+        }
+
+        for (key, value) in &self.parameters {
+            params.push((percent_encode(key), percent_encode(value)));
+        }
+
+        params.sort();
+        let param_string = params
+            .into_iter()
+            .map(|(key, value)| format!("{}={}", key, value))
+            .collect::<Vec<_>>()
+            .join("&");
+
+        let signature_base_string = format!(
+            "{}&{}&{}",
+            percent_encode(&self.method.to_string()),
+            percent_encode(&self.base_url),
+            percent_encode(&param_string)
+        );
+
+        let signing_key = format!(
+            "{}&{}",
+            percent_encode(consumer_secret),
+            percent_encode(oauth_token_secret)
+        );
+
+        base64::encode(&hmacsha1::hmac_sha1(
+            signing_key.as_bytes(),
+            signature_base_string.as_bytes(),
+        ))
+    }
 }
 
 #[cfg(test)]
