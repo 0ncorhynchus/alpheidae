@@ -1,5 +1,8 @@
+mod error;
 pub mod oauth;
 mod utils;
+
+pub use error::Error;
 
 #[derive(Clone)]
 pub struct KeyPair {

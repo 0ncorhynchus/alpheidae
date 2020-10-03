@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use alpheidae::*;
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct Config {
@@ -16,7 +16,8 @@ async fn request_token() {
     let response = oauth::request_token(&consumer_keys, config.callback_url)
         .x_auth_access_type(oauth::AccessType::Read)
         .send()
-        .await;
+        .await
+        .unwrap();
 
     assert!(response.oauth_callback_confirmed);
 }

@@ -1,3 +1,4 @@
+use crate::error::*;
 use crate::utils::*;
 use crate::*;
 use serde::Deserialize;
@@ -41,7 +42,7 @@ impl<'a> RequestToken<'a> {
         self
     }
 
-    pub async fn send(self) -> RequestTokenResponse {
+    pub async fn send(self) -> Result<RequestTokenResponse> {
         let url = "https://api.twitter.com/oauth/request_token";
         let tokens = TokenKeys::new(self.consumer_keys.clone());
         let mut request = Request::post(url);
@@ -49,8 +50,9 @@ impl<'a> RequestToken<'a> {
         if let Some(access_type) = self.x_auth_access_type {
             request.query("x_auth_access_type", access_type);
         }
-        let mut res = request.send(&tokens).await.unwrap();
-        serde_qs::from_bytes(res.body().await.unwrap().as_ref()).unwrap()
+        let mut res = request.send(&tokens).await?;
+        let body = res.body().await?;
+        Ok(serde_qs::from_bytes(body.as_ref())?)
     }
 }
 
@@ -130,16 +132,16 @@ impl<'a> AccessToken<'a> {
         }
     }
 
-    pub async fn send(self) -> AccessTokenResponse {
+    pub async fn send(self) -> Result<AccessTokenResponse> {
         let url = "https://api.twitter.com/oauth/access_token";
         let tokens = TokenKeys::new(self.consumer_keys.clone());
         let mut res = Request::post(url)
             .oauth_param("oauth_token", &self.oauth_token)
             .oauth_param("oauth_verifier", &self.oauth_verifier)
             .send(&tokens)
-            .await
-            .unwrap();
-        serde_qs::from_bytes(res.body().await.unwrap().as_ref()).unwrap()
+            .await?;
+        let body = res.body().await?;
+        Ok(serde_qs::from_bytes(body.as_ref())?)
     }
 }
 
@@ -164,9 +166,10 @@ impl<'a> InvalidateToken<'a> {
         Self { tokens }
     }
 
-    pub async fn send(self) {
+    pub async fn send(self) -> Result<()> {
         let url = "https://api.twitter.com/1.1/oauth/invalidate_token";
-        let _res = Request::post(url).send(self.tokens).await.unwrap();
+        let _res = Request::post(url).send(self.tokens).await?;
+        Ok(())
     }
 }
 

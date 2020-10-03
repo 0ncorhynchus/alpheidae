@@ -1,6 +1,6 @@
+use alpheidae::*;
 use serde::Deserialize;
 use std::io::{self, Write};
-use alpheidae::*;
 
 #[derive(Deserialize)]
 struct Config {
@@ -28,13 +28,15 @@ async fn main() {
     let response = oauth::request_token(&consumer_keys, callback_url)
         .x_auth_access_type(oauth::AccessType::Read)
         .send()
-        .await;
+        .await
+        .unwrap();
     assert!(response.oauth_callback_confirmed);
 
     let pin = read_pin(response.get_redirect_url());
     let response = oauth::access_token(&consumer_keys, response.oauth_token, pin.to_string())
         .send()
-        .await;
+        .await
+        .unwrap();
 
     println!("Hello, {}!", response.screen_name);
 
@@ -43,5 +45,5 @@ async fn main() {
         response.oauth_token_secret,
     ));
 
-    oauth::invalidate_token(&tokens).send().await;
+    oauth::invalidate_token(&tokens).send().await.unwrap();
 }
