@@ -1,18 +1,8 @@
 use crate::utils::*;
+use crate::*;
 use actix_web::client::{Client, Connector};
 use openssl::ssl::{SslConnector, SslMethod};
 use serde::Deserialize;
-
-pub struct ConsumerKeys {
-    key: String,
-    secret: String,
-}
-
-impl ConsumerKeys {
-    pub fn new(key: String, secret: String) -> Self {
-        Self { key, secret }
-    }
-}
 
 #[derive(Clone, Copy)]
 pub enum AccessType {
@@ -29,18 +19,18 @@ impl std::fmt::Display for AccessType {
     }
 }
 
-pub fn request_token(keys: &ConsumerKeys, oauth_callback: String) -> RequestToken {
+pub fn request_token(keys: &KeyPair, oauth_callback: String) -> RequestToken {
     RequestToken::new(keys, oauth_callback)
 }
 
 pub struct RequestToken<'a> {
-    consumer_keys: &'a ConsumerKeys,
+    consumer_keys: &'a KeyPair,
     oauth_callback: String,
     x_auth_access_type: Option<AccessType>,
 }
 
 impl<'a> RequestToken<'a> {
-    pub fn new(keys: &'a ConsumerKeys, oauth_callback: String) -> RequestToken<'a> {
+    pub fn new(keys: &'a KeyPair, oauth_callback: String) -> RequestToken<'a> {
         Self {
             consumer_keys: keys,
             oauth_callback,
