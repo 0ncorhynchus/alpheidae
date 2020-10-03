@@ -5,7 +5,7 @@
 ### [Authentication](https://developer.twitter.com/en/docs/authentication/overview)
 - [ ] POST oauth/access_token
 - [ ] GET  oauth/authenticate
-- [ ] GET  oauth/authorize
+- [x] GET  oauth/authorize
 - [x] POST oauth/request_token
 - [ ] POST oauth2/token
 - [ ] POST oauth/invalidate_token

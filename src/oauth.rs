@@ -63,3 +63,68 @@ pub struct RequestTokenResponse {
     pub oauth_token_secret: String,
     pub oauth_callback_confirmed: bool,
 }
+
+impl RequestTokenResponse {
+    pub fn authorize(&self) -> Authorize {
+        Authorize::new(self.oauth_token.clone())
+    }
+
+    pub fn get_redirect_url(&self) -> String {
+        self.authorize().into_url()
+    }
+}
+
+pub struct Authorize {
+    oauth_token: String,
+    force_login: Option<bool>,
+    screen_name: Option<String>,
+}
+
+impl Authorize {
+    pub fn new(oauth_token: String) -> Self {
+        Self {
+            oauth_token,
+            force_login: None,
+            screen_name: None,
+        }
+    }
+
+    pub fn force_login(mut self, force_login: bool) -> Self {
+        self.force_login = Some(force_login);
+        self
+    }
+
+    pub fn screen_name(mut self, screen_name: String) -> Self {
+        self.screen_name = Some(screen_name);
+        self
+    }
+
+    pub fn into_url(self) -> String {
+        let mut url = format!(
+            "https://api.twitter.com/oauth/authorize?oauth_token={}",
+            self.oauth_token
+        );
+        if let Some(force_login) = self.force_login {
+            url += &format!("&force_login={}", force_login);
+        }
+        if let Some(screen_name) = self.screen_name {
+            url += &format!("&screen_name={}", percent_encode(&screen_name));
+        }
+        url
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn authorize_url() {
+        let response = RequestTokenResponse {
+            oauth_token: "Z6eEdO8MOmk394WozF5oKyuAv855l4Mlqo7hhlSLik".to_string(),
+            oauth_token_secret: "".to_string(),
+            oauth_callback_confirmed: true,
+        };
+        assert_eq!(response.get_redirect_url(), "https://api.twitter.com/oauth/authorize?oauth_token=Z6eEdO8MOmk394WozF5oKyuAv855l4Mlqo7hhlSLik");
+    }
+}
