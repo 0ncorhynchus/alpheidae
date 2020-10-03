@@ -43,10 +43,7 @@ impl<'a> RequestToken<'a> {
 
     pub async fn send(self) -> RequestTokenResponse {
         let url = "https://api.twitter.com/oauth/request_token";
-        let tokens = TokenKeys {
-            consumer_keys: self.consumer_keys.clone(),
-            oauth_tokens: None,
-        };
+        let tokens = TokenKeys::new(self.consumer_keys.clone());
         let mut request = Request::post(url);
         request.oauth_param("oauth_callback", &self.oauth_callback);
         if let Some(access_type) = self.x_auth_access_type {
@@ -135,10 +132,7 @@ impl<'a> AccessToken<'a> {
 
     pub async fn send(self) -> AccessTokenResponse {
         let url = "https://api.twitter.com/oauth/access_token";
-        let tokens = TokenKeys {
-            consumer_keys: self.consumer_keys.clone(),
-            oauth_tokens: None,
-        };
+        let tokens = TokenKeys::new(self.consumer_keys.clone());
         let mut res = Request::post(url)
             .oauth_param("oauth_token", &self.oauth_token)
             .oauth_param("oauth_verifier", &self.oauth_verifier)

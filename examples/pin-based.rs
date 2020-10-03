@@ -37,4 +37,11 @@ async fn main() {
         .await;
 
     println!("Hello, {}!", response.screen_name);
+
+    let tokens = TokenKeys::new(consumer_keys).oauth_tokens(KeyPair::new(
+        response.oauth_token,
+        response.oauth_token_secret,
+    ));
+
+    oauth::invalidate_token(&tokens).send().await;
 }
