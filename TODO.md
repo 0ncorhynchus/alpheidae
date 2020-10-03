@@ -3,7 +3,7 @@
 ## Twitter API v1.1
 
 ### [Authentication](https://developer.twitter.com/en/docs/authentication/overview)
-- [ ] POST oauth/access_token
+- [x] POST oauth/access_token
 - [ ] GET  oauth/authenticate
 - [x] GET  oauth/authorize
 - [x] POST oauth/request_token
