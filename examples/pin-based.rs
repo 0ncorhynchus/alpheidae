@@ -19,6 +19,16 @@ fn read_pin(url: String) -> u32 {
     buffer.trim().parse().expect("Invalid input.")
 }
 
+fn read_tweet() -> String {
+    println!("Type tweet contents:");
+    io::stdout().flush().unwrap();
+
+    let mut buffer = String::new();
+    io::stdin().read_line(&mut buffer).unwrap();
+
+    buffer.trim()
+}
+
 #[actix_rt::main]
 async fn main() {
     let config: Config = envy::from_env().unwrap();
@@ -26,7 +36,6 @@ async fn main() {
     let callback_url = "oob".to_string();
 
     let response = oauth::request_token(&consumer_keys, callback_url)
-        .x_auth_access_type(oauth::AccessType::Read)
         .send()
         .await
         .unwrap();
@@ -44,6 +53,9 @@ async fn main() {
         response.oauth_token,
         response.oauth_token_secret,
     ));
+
+    let tweet = read_tweet();
+    statuses::update(&tokens, tweet).send().await.unwrap();
 
     oauth::invalidate_token(&tokens).send().await.unwrap();
 }

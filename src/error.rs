@@ -1,4 +1,4 @@
-use actix_web::client::SendRequestError;
+use actix_web::client::{JsonPayloadError, SendRequestError};
 use actix_web::error::PayloadError;
 use serde_qs::Error as SerdeQsError;
 use std::convert::From;
@@ -39,6 +39,7 @@ macro_rules! impl_error {
 
 impl_error! {
     SendRequestError,
+    JsonPayloadError,
     PayloadError,
     SerdeQsError,
 }
