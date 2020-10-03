@@ -151,10 +151,10 @@ impl<'a> AccessToken<'a> {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct AccessTokenResponse {
-    oauth_token: String,
-    oauth_token_secret: String,
-    user_id: u64,
-    screen_name: String,
+    pub oauth_token: String,
+    pub oauth_token_secret: String,
+    pub user_id: u64,
+    pub screen_name: String,
 }
 
 #[cfg(test)]
