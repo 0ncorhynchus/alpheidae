@@ -1,7 +1,5 @@
 use crate::utils::*;
 use crate::*;
-use actix_web::client::{Client, Connector};
-use openssl::ssl::{SslConnector, SslMethod};
 use serde::Deserialize;
 
 #[derive(Clone, Copy)]
@@ -45,20 +43,16 @@ impl<'a> RequestToken<'a> {
 
     pub async fn send(self) -> RequestTokenResponse {
         let url = "https://api.twitter.com/oauth/request_token";
-        let mut oauth_params = gen_auth_params(&self.consumer_keys.key);
-        oauth_params.push(("oauth_callback", self.oauth_callback));
+        let tokens = TokenKeys {
+            consumer_keys: self.consumer_keys.clone(),
+            oauth_tokens: None,
+        };
+        let mut request = Request::post(url);
+        request.oauth_param("oauth_callback", &self.oauth_callback);
         if let Some(access_type) = self.x_auth_access_type {
-            oauth_params.push(("x_auth_access_type", access_type.to_string()));
+            request.query("x_auth_access_type", access_type);
         }
-        let signature_key = gen_signature_key(&self.consumer_keys.secret, "");
-        write_signature(signature_key, url, &mut oauth_params, &[]);
-
-        let builder = SslConnector::builder(SslMethod::tls()).unwrap();
-        let client = Client::builder()
-            .connector(Connector::new().ssl(builder.build()).finish())
-            .finish();
-
-        let mut res = client.post(url).oauth(oauth_params).send().await.unwrap();
+        let mut res = request.send(&tokens).await.unwrap();
         serde_qs::from_bytes(res.body().await.unwrap().as_ref()).unwrap()
     }
 }
