@@ -13,7 +13,7 @@
 
 ### Tweets
 #### [Post, retrieve, and engage with Tweets](https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/overview)
-- [ ] POST statuses/update
+- [x] POST statuses/update
 - [ ] POST statuses/destroy/:id
 - [ ] GET  statuses/show/:id
 - [ ] GET  statuses/oembed
