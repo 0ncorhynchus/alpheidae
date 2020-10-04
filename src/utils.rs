@@ -190,7 +190,7 @@ fn get_signing_key(tokens: &TokenKeys) -> String {
         .oauth_tokens
         .as_ref()
         .map(|key_pair| percent_encode(&key_pair.secret))
-        .unwrap_or("".to_string());
+        .unwrap_or_else(|| "".to_string());
     format!(
         "{}&{}",
         percent_encode(&tokens.consumer_keys.secret),
