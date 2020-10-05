@@ -26,7 +26,7 @@ fn read_tweet() -> String {
     let mut buffer = String::new();
     io::stdin().read_line(&mut buffer).unwrap();
 
-    buffer.trim()
+    buffer.trim().to_string()
 }
 
 #[actix_rt::main]
