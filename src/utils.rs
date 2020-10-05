@@ -111,10 +111,12 @@ impl Request {
             .connector(Connector::new().ssl(builder.build()).finish())
             .finish();
 
-        client
-            .post(self.get_url())
-            .header(AUTHORIZATION, authorization_header)
-            .send()
+        match self.method {
+            HttpMethod::POST => client.post(self.get_url()),
+            HttpMethod::GET => client.get(self.get_url()),
+        }
+        .header(AUTHORIZATION, authorization_header)
+        .send()
     }
 }
 
