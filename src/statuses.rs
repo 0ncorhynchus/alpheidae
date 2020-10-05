@@ -78,3 +78,53 @@ impl<'a> Update<'a> {
         Ok(request.send(self.tokens).await?.json().await?)
     }
 }
+
+pub fn show(tokens: &TokenKeys, id: u64) -> Show {
+    Show::new(tokens, id)
+}
+
+pub struct Show<'a> {
+    tokens: &'a TokenKeys,
+    id: u64,
+    trim_user: Option<bool>,
+    include_my_retweet: Option<bool>,
+    include_entities: Option<bool>,
+    include_ext_alt_text: Option<bool>,
+    include_card_uri: Option<bool>,
+}
+
+impl<'a> Show<'a> {
+    pub fn new(tokens: &'a TokenKeys, id: u64) -> Self {
+        Self {
+            tokens,
+            id,
+            trim_user: None,
+            include_my_retweet: None,
+            include_entities: None,
+            include_ext_alt_text: None,
+            include_card_uri: None,
+        }
+    }
+
+    pub async fn send(self) -> Result<Tweet> {
+        let url = "https://api.twitter.com/1.1/statuses/show.json";
+        let mut request = Request::get(url);
+        request.query("id", self.id);
+
+        macro_rules! opt_query {
+            ($var:ident) => {
+                if let Some(param) = self.$var {
+                    request.query(stringify!($var), param);
+                }
+            };
+        }
+
+        opt_query!(trim_user);
+        opt_query!(include_my_retweet);
+        opt_query!(include_entities);
+        opt_query!(include_ext_alt_text);
+        opt_query!(include_card_uri);
+
+        Ok(request.send(self.tokens).await?.json().await?)
+    }
+}
