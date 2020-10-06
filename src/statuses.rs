@@ -79,6 +79,38 @@ impl<'a> Update<'a> {
     }
 }
 
+pub fn destroy(tokens: &TokenKeys, id: u64) -> Destroy {
+    Destroy::new(tokens, id)
+}
+
+pub struct Destroy<'a> {
+    tokens: &'a TokenKeys,
+    id: u64,
+    trim_user: Option<bool>,
+}
+
+impl<'a> Destroy<'a> {
+    pub fn new(tokens: &'a TokenKeys, id: u64) -> Self {
+        Self {
+            tokens,
+            id,
+            trim_user: None,
+        }
+    }
+
+    pub async fn send(self) -> Result<Tweet> {
+        let url = format!(
+            "https://api.twitter.com/1.1/statuses/destroy/{}.json",
+            self.id
+        );
+        let mut request = Request::post(url);
+        if let Some(trim_user) = self.trim_user {
+            request.parameter("trim_user", trim_user);
+        }
+        Ok(request.send(self.tokens).await?.json().await?)
+    }
+}
+
 pub fn show(tokens: &TokenKeys, id: u64) -> Show {
     Show::new(tokens, id)
 }
