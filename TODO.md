@@ -15,7 +15,7 @@
 #### [Post, retrieve, and engage with Tweets](https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/overview)
 - [x] POST statuses/update
 - [ ] POST statuses/destroy/:id
-- [ ] GET  statuses/show/:id
+- [x] GET  statuses/show/:id
 - [ ] GET  statuses/oembed
 - [ ] GET  statuses/lookup
 - [ ] POST statuses/retweet/:id
