@@ -8,13 +8,13 @@
 - [ ] POST oauth2/token
 - [x] POST oauth/invalidate_token
 - [ ] POST oauth2/invalidate_token
-  
+
 ## Twitter API v1.1
 
 ### Tweets
 #### [Post, retrieve, and engage with Tweets](https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/overview)
 - [x] POST statuses/update
-- [ ] POST statuses/destroy/:id
+- [x] POST statuses/destroy/:id
 - [x] GET  statuses/show/:id
 - [ ] GET  statuses/oembed
 - [ ] GET  statuses/lookup
