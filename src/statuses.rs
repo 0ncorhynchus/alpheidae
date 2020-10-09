@@ -1,6 +1,8 @@
 use crate::error::*;
 use crate::utils::*;
 use crate::*;
+use serde::{Deserialize, Serialize};
+use std::fmt::{self, Display};
 
 pub fn update(tokens: &TokenKeys, status: String) -> Update {
     Update::new(tokens, status)
@@ -159,4 +161,121 @@ impl<'a> Show<'a> {
 
         Ok(request.send(self.tokens).await?.json().await?)
     }
+}
+
+pub fn oembed(tokens: &TokenKeys, url: String) -> OEmbedRequest {
+    OEmbedRequest::new(tokens, url)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Align {
+    Left,
+    Right,
+    Center,
+    None,
+}
+
+impl Display for Align {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Left => write!(f, "left"),
+            Self::Right => write!(f, "right"),
+            Self::Center => write!(f, "center"),
+            Self::None => write!(f, "none"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Theme {
+    Light,
+    Dark,
+}
+
+impl Display for Theme {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Light => write!(f, "light"),
+            Self::Dark => write!(f, "dark"),
+        }
+    }
+}
+
+pub struct OEmbedRequest<'a> {
+    tokens: &'a TokenKeys,
+    url: String,
+    maxwidth: Option<u16>,
+    hide_media: Option<bool>,
+    hide_thread: Option<bool>,
+    omit_script: Option<bool>,
+    align: Option<Align>,
+    related: Option<String>,
+    lang: Option<String>, // Language TODO
+    theme: Option<Theme>,
+    link_color: Option<String>,
+    widget_type: Option<String>, // Video TODO
+    dnt: Option<bool>,
+}
+
+impl<'a> OEmbedRequest<'a> {
+    pub fn new(tokens: &'a TokenKeys, url: String) -> Self {
+        Self {
+            tokens,
+            url,
+            maxwidth: None,
+            hide_media: None,
+            hide_thread: None,
+            omit_script: None,
+            align: None,
+            related: None,
+            lang: None,
+            theme: None,
+            link_color: None,
+            widget_type: None,
+            dnt: None,
+        }
+    }
+
+    pub async fn send(self) -> Result<OEmbed> {
+        let url = "https://publish.twitter.com/oembed";
+        let mut request = Request::get(url);
+        request.query("url", self.url);
+
+        macro_rules! opt_query {
+            ($var:ident) => {
+                if let Some(param) = self.$var {
+                    request.query(stringify!($var), param);
+                }
+            };
+        }
+
+        opt_query!(maxwidth);
+        opt_query!(hide_media);
+        opt_query!(hide_thread);
+        opt_query!(omit_script);
+        opt_query!(align);
+        opt_query!(related);
+        opt_query!(lang);
+        opt_query!(theme);
+        opt_query!(link_color);
+        opt_query!(widget_type);
+        opt_query!(dnt);
+
+        Ok(request.send(self.tokens).await?.json().await?)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OEmbed {
+    pub url: String,
+    pub author_name: String,
+    pub author_url: String,
+    pub html: String,
+    pub width: u16,
+    pub height: Option<u16>,
+    pub r#type: String,
+    pub cache_age: String,
+    pub provider_name: String,
+    pub provider_url: String,
+    pub version: String,
 }

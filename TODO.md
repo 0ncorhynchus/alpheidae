@@ -16,7 +16,7 @@
 - [x] POST statuses/update
 - [x] POST statuses/destroy/:id
 - [x] GET  statuses/show/:id
-- [ ] GET  statuses/oembed
+- [x] GET  statuses/oembed
 - [ ] GET  statuses/lookup
 - [ ] POST statuses/retweet/:id
 - [ ] POST statuses/unretweet/:id
