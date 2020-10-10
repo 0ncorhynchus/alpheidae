@@ -1,5 +1,6 @@
 mod error;
 mod macros;
+pub mod media;
 pub mod oauth;
 pub mod statuses;
 mod utils;

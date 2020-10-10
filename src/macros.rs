@@ -29,4 +29,17 @@ macro_rules! _opt_query {
             $request.query(stringify!($var), param);
         }
     };
+    ($self:ident, $request:ident, $var:ident[]) => {
+        if !$self.$var.is_empty() {
+            $request.query(
+                stringify!($var),
+                $self
+                    .$var
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(","),
+            );
+        }
+    };
 }
