@@ -95,3 +95,35 @@ impl<'a> UploadAppendRequest<'a> {
         Ok(())
     }
 }
+
+pub fn upload_finalize(tokens: &TokenKeys, media_id: u64) -> UploadFinalizeRequest {
+    UploadFinalizeRequest::new(tokens, media_id)
+}
+
+pub struct UploadFinalizeRequest<'a> {
+    tokens: &'a TokenKeys,
+    media_id: u64,
+}
+
+impl<'a> UploadFinalizeRequest<'a> {
+    pub fn new(tokens: &'a TokenKeys, media_id: u64) -> Self {
+        Self { tokens, media_id }
+    }
+
+    pub async fn send(self) -> Result<UploadFinalizeResponse> {
+        let url = "https://upload.twitter.com/1.1/media/upload.json";
+        let mut request = Request::post(url);
+        request.query("media_id", self.media_id);
+
+        Ok(request.send(self.tokens).await?.json().await?)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UploadFinalizeResponse {
+    media_id: u64,
+    media_id_string: String,
+    size: u32,
+    expires_after_secs: u32,
+    // processing_info or video or image // TODO
+}
