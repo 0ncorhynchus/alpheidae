@@ -54,3 +54,44 @@ pub struct UploadInitResponse {
     expires_after_secs: u32,
     image: Image,
 }
+
+pub fn upload_append(
+    tokens: &TokenKeys,
+    media_id: u64,
+    media: Vec<u8>,
+    segment_index: u16,
+) -> UploadAppendRequest {
+    UploadAppendRequest::new(tokens, media_id, media, segment_index)
+}
+
+pub struct UploadAppendRequest<'a> {
+    tokens: &'a TokenKeys,
+    media_id: u64,
+    media: Vec<u8>,
+    segment_index: u16,
+}
+
+impl<'a> UploadAppendRequest<'a> {
+    pub fn new(tokens: &'a TokenKeys, media_id: u64, media: Vec<u8>, segment_index: u16) -> Self {
+        Self {
+            tokens,
+            media_id,
+            media,
+            segment_index,
+        }
+    }
+
+    pub async fn send(self) -> Result<()> {
+        let url = "https://upload.twitter.com/1.1/media/upload.json";
+        let mut request = Request::post(url);
+        request.query("media_id", self.media_id);
+        // request.query("media", self.media);
+        request.query(
+            "media_data",
+            base64::encode(String::from_utf8(self.media).unwrap()),
+        );
+        request.query("segment_index", self.segment_index);
+        request.send(self.tokens).await?;
+        Ok(())
+    }
+}
