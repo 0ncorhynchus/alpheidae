@@ -47,9 +47,7 @@ impl<'a> RequestToken<'a> {
         let tokens = TokenKeys::new(self.consumer_keys.clone());
         let mut request = Request::post(url);
         request.oauth_param("oauth_callback", &self.oauth_callback);
-        if let Some(access_type) = self.x_auth_access_type {
-            request.query("x_auth_access_type", access_type);
-        }
+        _opt_query!(self, request, x_auth_access_type);
         let mut res = request.send(&tokens).await?;
         let body = res.body().await?;
         Ok(serde_qs::from_bytes(body.as_ref())?)
