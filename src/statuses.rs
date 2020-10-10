@@ -46,36 +46,16 @@ impl<'a> Update<'a> {
         let mut request = Request::post(url);
         request.query("status", self.status);
 
-        macro_rules! opt_param {
-            ($var:ident) => {
-                if let Some(param) = self.$var {
-                    request.parameter(stringify!($var), param);
-                }
-            };
-            ($var:ident[]) => {
-                if !self.$var.is_empty() {
-                    request.parameter(
-                        stringify!($var),
-                        self.$var
-                            .iter()
-                            .map(ToString::to_string)
-                            .collect::<Vec<_>>()
-                            .join(","),
-                    );
-                }
-            };
-        }
-
-        opt_param!(in_reply_to_status_id);
-        opt_param!(auto_populate_reply_metadata);
-        opt_param!(exclude_reply_user_ids[]);
-        opt_param!(attachment_url);
-        opt_param!(media_ids[]);
-        opt_param!(possibly_sensitive);
-        opt_param!(lat);
-        opt_param!(long);
-        opt_param!(place_id);
-        opt_param!(display_coordinates);
+        _opt_param!(self, request, in_reply_to_status_id);
+        _opt_param!(self, request, auto_populate_reply_metadata);
+        _opt_param!(self, request, exclude_reply_user_ids[]);
+        _opt_param!(self, request, attachment_url);
+        _opt_param!(self, request, media_ids[]);
+        _opt_param!(self, request, possibly_sensitive);
+        _opt_param!(self, request, lat);
+        _opt_param!(self, request, long);
+        _opt_param!(self, request, place_id);
+        _opt_param!(self, request, display_coordinates);
 
         Ok(request.send(self.tokens).await?.json().await?)
     }
@@ -241,25 +221,17 @@ impl<'a> OEmbedRequest<'a> {
         let mut request = Request::get(url);
         request.query("url", self.url);
 
-        macro_rules! opt_query {
-            ($var:ident) => {
-                if let Some(param) = self.$var {
-                    request.query(stringify!($var), param);
-                }
-            };
-        }
-
-        opt_query!(maxwidth);
-        opt_query!(hide_media);
-        opt_query!(hide_thread);
-        opt_query!(omit_script);
-        opt_query!(align);
-        opt_query!(related);
-        opt_query!(lang);
-        opt_query!(theme);
-        opt_query!(link_color);
-        opt_query!(widget_type);
-        opt_query!(dnt);
+        _opt_query!(self, request, maxwidth);
+        _opt_query!(self, request, hide_media);
+        _opt_query!(self, request, hide_thread);
+        _opt_query!(self, request, omit_script);
+        _opt_query!(self, request, align);
+        _opt_query!(self, request, related);
+        _opt_query!(self, request, lang);
+        _opt_query!(self, request, theme);
+        _opt_query!(self, request, link_color);
+        _opt_query!(self, request, widget_type);
+        _opt_query!(self, request, dnt);
 
         Ok(request.send(self.tokens).await?.json().await?)
     }
