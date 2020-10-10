@@ -41,19 +41,10 @@ impl<'a> UploadInitRequest<'a> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Image {
-    image_type: String,
-    w: u32,
-    h: u32,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UploadInitResponse {
-    media_id: u64,
-    medi_id_string: String,
-    size: u32,
-    expires_after_secs: u32,
-    image: Image,
+    pub media_id: u64,
+    pub media_id_string: String,
+    pub expires_after_secs: u32,
 }
 
 pub fn upload_append(
@@ -123,10 +114,10 @@ impl<'a> UploadStatusRequest<'a> {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UploadStatusResponse {
-    media_id: u64,
-    media_id_string: String,
-    size: u32,
-    expires_after_secs: u32,
+    pub media_id: u64,
+    pub media_id_string: String,
+    pub size: u32,
+    pub expires_after_secs: u32,
     // processing_info or video or image // TODO
 }
 
@@ -156,9 +147,9 @@ impl<'a> UploadFinalizeRequest<'a> {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UploadFinalizeResponse {
-    media_id: u64,
-    media_id_string: String,
-    size: u32,
-    expires_after_secs: u32,
+    pub media_id: u64,
+    pub media_id_string: String,
+    pub size: u32,
+    pub expires_after_secs: u32,
     // processing_info or video or image // TODO
 }
