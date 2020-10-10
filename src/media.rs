@@ -29,6 +29,7 @@ impl<'a> UploadInitRequest<'a> {
     pub async fn send(self) -> Result<UploadInitResponse> {
         let url = "https://upload.twitter.com/1.1/media/upload.json";
         let mut request = Request::post(url);
+        request.query("command", "INIT");
         request.query("total_bytes", self.total_bytes);
         request.query("media_type", self.media_type);
 
@@ -84,6 +85,7 @@ impl<'a> UploadAppendRequest<'a> {
     pub async fn send(self) -> Result<()> {
         let url = "https://upload.twitter.com/1.1/media/upload.json";
         let mut request = Request::post(url);
+        request.query("command", "APPEND");
         request.query("media_id", self.media_id);
         // request.query("media", self.media);
         request.query(
@@ -113,6 +115,7 @@ impl<'a> UploadFinalizeRequest<'a> {
     pub async fn send(self) -> Result<UploadFinalizeResponse> {
         let url = "https://upload.twitter.com/1.1/media/upload.json";
         let mut request = Request::post(url);
+        request.query("command", "FINALIZE");
         request.query("media_id", self.media_id);
 
         Ok(request.send(self.tokens).await?.json().await?)
