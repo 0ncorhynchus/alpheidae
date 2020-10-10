@@ -97,6 +97,38 @@ impl<'a> UploadAppendRequest<'a> {
         Ok(())
     }
 }
+pub fn upload_status(tokens: &TokenKeys, media_id: u64) -> UploadStatusRequest {
+    UploadStatusRequest::new(tokens, media_id)
+}
+
+pub struct UploadStatusRequest<'a> {
+    tokens: &'a TokenKeys,
+    media_id: u64,
+}
+
+impl<'a> UploadStatusRequest<'a> {
+    pub fn new(tokens: &'a TokenKeys, media_id: u64) -> Self {
+        Self { tokens, media_id }
+    }
+
+    pub async fn send(self) -> Result<UploadStatusResponse> {
+        let url = "https://upload.twitter.com/1.1/media/upload.json";
+        let mut request = Request::get(url);
+        request.query("command", "STATUS");
+        request.query("media_id", self.media_id);
+
+        Ok(request.send(self.tokens).await?.json().await?)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UploadStatusResponse {
+    media_id: u64,
+    media_id_string: String,
+    size: u32,
+    expires_after_secs: u32,
+    // processing_info or video or image // TODO
+}
 
 pub fn upload_finalize(tokens: &TokenKeys, media_id: u64) -> UploadFinalizeRequest {
     UploadFinalizeRequest::new(tokens, media_id)
